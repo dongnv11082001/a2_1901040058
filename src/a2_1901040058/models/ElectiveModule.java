@@ -24,6 +24,6 @@ public class ElectiveModule extends Module {
     }
 
     private boolean validateDepartmentName(String departmentName) {
-        return departmentName.length() > 0;
+        return departmentName != null;
     }
 }

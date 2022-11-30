@@ -1,11 +1,15 @@
 package a2_1901040058.controllers;
 
-import a2_1901040058.models.Enrolment;
+import a2_1901040058.DBHelper;
 import a2_1901040058.models.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
 
 public class StudentManager extends Manager {
     // view elements
@@ -13,9 +17,20 @@ public class StudentManager extends Manager {
     private JTextField jDob;
     private JTextField jAddress;
     private JTextField jEmail;
+    private ArrayList<Student> students;
+    Connection connection;
+    Statement statement;
+    ResultSet rs;
 
-    public StudentManager(String title, String storageFile) {
-        super(title, storageFile);
+    public StudentManager(String title) {
+        super(title);
+        students = new ArrayList<>();
+        try {
+            connection = DBHelper.getConnection();
+            statement = connection.createStatement();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -42,7 +57,6 @@ public class StudentManager extends Manager {
         jDob = new JTextField(20);
         jAddress = new JTextField(20);
         jEmail = new JTextField(20);
-
         middlePanel.add(lblName);
         middlePanel.add(jStudentName);
         middlePanel.add(lblDob);
@@ -60,14 +74,12 @@ public class StudentManager extends Manager {
         JButton btnOK = new JButton("OK");
         btnOK.addActionListener(this);
         pnlBottom.add(btnOK);
-        JButton btnCancel = new JButton("Cancel");
-        btnCancel.addActionListener(this);
-        pnlBottom.add(btnCancel);
     }
+
 
     @Override
     public Object createObject() throws Exception {
-        Student s = null;
+        Student s;
         String name = jStudentName.getText();
         String dob = jDob.getText();
         String address = jAddress.getText();
@@ -76,32 +88,38 @@ public class StudentManager extends Manager {
             showErrorMessage("Invalid input! Please check again (filed with * are required)");
         } else {
             s = new Student(name, dob, address, email);
-            objects.add(s);
+            students.add(s);
+            DBHelper.createStudent(s);
             showMessage("created student= " + s);
-            gui.setVisible(false);
         }
-
-        return null;
+        return students;
     }
 
     public Student getStudentByID(String id) {
-        Student student = null;
-        for (Object object : objects) {
-            Student s = (Student) object;
-            if (s.getId().equalsIgnoreCase(id)) {
-                student = s;
+        for (Student student : students) {
+            if (student.getId().equalsIgnoreCase(id)) {
+                return student;
             }
         }
-        return student;
+        return null;
     }
 
-    public void showListStudent() {
+    public void showListStudent() throws Exception {
         JFrame frame = new JFrame("List of the students");
         String[] headers = {"#", "Student ID", "Student Name", "Student Address", "Student Email"};
         Object[][] data = {};
+        rs = statement.executeQuery("SELECT * FROM students");
+        while (rs.next()) {
+            String name = rs.getString("name");
+            String dob = rs.getString("dob");
+            String address = rs.getString("address");
+            String email = rs.getString("email");
+            Student student = new Student(name, dob, address, email);
+            students.add(student);
+        }
         DefaultTableModel table = new DefaultTableModel(data, headers);
-        for (int i = 0; i < objects.size() - 1; i++) {
-            Student s = (Student) objects.get(i);
+        for (int i = 0; i < students.size(); i++) {
+            Student s = students.get(i);
             table.addRow(data);
             table.setValueAt(i + 1, i, 0);
             table.setValueAt(s.getId(), i, 1);
@@ -109,12 +127,12 @@ public class StudentManager extends Manager {
             table.setValueAt(s.getAddress(), i, 3);
             table.setValueAt(s.getEmail(), i, 4);
         }
-        JTable tblContacts = new JTable(table);
-        frame.add(new JScrollPane(tblContacts));
-        frame.pack();
+        JTable studentTable = new JTable(table);
+        frame.add(new JScrollPane(studentTable));
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setPreferredSize(new Dimension(700, 400));
         frame.setLocation(new Point(0, 100));
         frame.setVisible(true);
+        frame.pack();
     }
 }

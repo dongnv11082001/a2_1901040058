@@ -10,19 +10,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
+import java.util.Objects;
 
 public class CourseManProg extends WindowAdapter implements ActionListener {
-    private StudentManager studentManager; // the student manager
-    private ModuleManager moduleManager; // the module manager
-    private EnrolmentManager enrolmentManager; // the module manager
+    private final StudentManager studentManager; // the student manager
+    private final ModuleManager moduleManager; // the module manager
+    private final EnrolmentManager enrolmentManager; // the module manager
     private JFrame gui;
 
     public CourseManProg() {
         createGUI();
-        studentManager = new StudentManager("StudentManager", "students.dat");
-        moduleManager = new ModuleManager("ModuleManager", "modules.dat");
-        enrolmentManager = new EnrolmentManager("EnrolmentManager", "enrolments.dat", studentManager, moduleManager);
+        studentManager = new StudentManager("StudentManager");
+        moduleManager = new ModuleManager("ModuleManager");
+        enrolmentManager = new EnrolmentManager("EnrolmentManager", studentManager, moduleManager);
     }
 
     public void createGUI() {
@@ -89,7 +89,7 @@ public class CourseManProg extends WindowAdapter implements ActionListener {
         pnlMiddle.setBorder(BorderFactory.createEtchedBorder());
         gui.add(pnlMiddle, BorderLayout.CENTER);
 
-        ImageIcon image = new ImageIcon(getClass().getResource("/a2_1901040058/images/doge_point.jpg"));
+        ImageIcon image = new ImageIcon(Objects.requireNonNull(getClass().getResource("/a2_1901040058/images/doge_point.jpg")));
         JLabel imageLabel = new JLabel(image) {
             public void paintComponent(Graphics g) {
                 g.drawImage(image.getImage(), 0, 0, 385, 380, null);
@@ -110,19 +110,23 @@ public class CourseManProg extends WindowAdapter implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
-        switch (cmd) {
-            case "New Student" -> studentManager.display();
-            case "List Student" -> studentManager.showListStudent();
-            case "New Module" -> moduleManager.display();
-            case "List Module" -> moduleManager.showListModule();
-            case "New Enrolment" -> enrolmentManager.display();
-            case "Initial Report" -> enrolmentManager.initialReport();
-            case "Assessment Report" -> enrolmentManager.assessmentReport();
-            case "Exit" -> shutDown();
+        try {
+            switch (cmd) {
+                case "New Student" -> studentManager.display();
+                case "List Student" -> studentManager.showListStudent();
+                case "New Module" -> moduleManager.display();
+                case "List Module" -> moduleManager.showListModule();
+                case "New Enrolment" -> enrolmentManager.display();
+                case "Initial Report" -> enrolmentManager.initialReport();
+                case "Assessment Report" -> enrolmentManager.assessmentReport();
+                case "Exit" -> shutDown();
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
-    public void startUp() throws IOException {
+    public void startUp() throws Exception {
         studentManager.startUp();
         moduleManager.startUp();
         enrolmentManager.startUp();
@@ -135,7 +139,7 @@ public class CourseManProg extends WindowAdapter implements ActionListener {
         System.exit(1);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         CourseManProg app = new CourseManProg();
         app.startUp();
         app.display();

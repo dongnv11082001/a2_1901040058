@@ -1,23 +1,34 @@
 package a2_1901040058.controllers;
 
+import a2_1901040058.DBHelper;
 import a2_1901040058.exceptions.NotPossibleException;
-import a2_1901040058.models.Enrolment;
+import a2_1901040058.models.*;
 import a2_1901040058.models.Module;
-import a2_1901040058.models.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.*;
 
 public class EnrolmentManager extends Manager {
     private JTextField jStu, jMod, jInternal, jExam;
-    private StudentManager studentManager;
-    private ModuleManager moduleManager;
+    private final StudentManager studentManager;
+    private final ModuleManager moduleManager;
+    Connection connection;
+    Statement statement;
+    ResultSet rs;
 
-    public EnrolmentManager(String title, String storageFile, StudentManager studentManager, ModuleManager moduleManager) {
-        super(title, storageFile);
+    public EnrolmentManager(String title, StudentManager studentManager, ModuleManager moduleManager) {
+        super(title);
         this.studentManager = studentManager;
         this.moduleManager = moduleManager;
+
+        try {
+            connection = DBHelper.getConnection();
+            statement = connection.createStatement();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -74,12 +85,22 @@ public class EnrolmentManager extends Manager {
         pnlBottom.add(btnCancel);
     }
 
-    public void initialReport() {
+    public void initialReport() throws SQLException {
+        rs = statement.executeQuery("SELECT * FROM enrolments");
+        while (rs.next()) {
+            String sid = rs.getString("s_id");
+            String mcode = rs.getString("m_code");
+            double internal = rs.getDouble("internal");
+            double examination = rs.getDouble("examination");
+            Enrolment enrolment = new Enrolment(studentManager.getStudentByID(sid), moduleManager.getModuleByCode(mcode), (float) internal, (float) examination);
+            objects.add(enrolment);
+        }
         JFrame frame = new JFrame("List of the initial enrolments");
         String[] headers = {"#", "Student ID", "Student Name", "Module Code", "Module Name"};
         Object[][] data = {};
         DefaultTableModel table = new DefaultTableModel(data, headers);
-        for (int i = 0; i < objects.size() - 1; i++) {
+        JTable initialReportTable = new JTable(table);
+        for (int i = 0; i < objects.size(); i++) {
             Enrolment e = (Enrolment) objects.get(i);
             table.addRow(data);
             table.setValueAt(i + 1, i, 0);
@@ -88,36 +109,45 @@ public class EnrolmentManager extends Manager {
             table.setValueAt(e.getModule().getCode(), i, 3);
             table.setValueAt(e.getModule().getName(), i, 4);
         }
-        JTable tblContacts = new JTable(table);
-        frame.add(new JScrollPane(tblContacts));
-        frame.pack();
+        frame.add(new JScrollPane(initialReportTable));
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setPreferredSize(new Dimension(700, 400));
         frame.setLocation(new Point(0, 100));
         frame.setVisible(true);
+        frame.pack();
     }
 
-    public void assessmentReport() {
+    public void assessmentReport() throws SQLException {
+        rs = statement.executeQuery("SELECT * FROM enrolments");
+        while (rs.next()) {
+            String sid = rs.getString("s_id");
+            String mcode = rs.getString("m_code");
+            double internal = rs.getDouble("internal");
+            double examination = rs.getDouble("examination");
+            Enrolment enrolment = new Enrolment(studentManager.getStudentByID(sid), moduleManager.getModuleByCode(mcode), (float) internal, (float) examination);
+            objects.add(enrolment);
+        }
         JFrame frame = new JFrame("List of the assessed enrolments");
-
         String[] headers = {"#", "Student ID", "Module Code", "Internal mark", "Examination mark", "Final grade"};
         DefaultTableModel table = new DefaultTableModel(headers, 0);
-        for (int i = 0; i < objects.size() - 1; i++) {
-
+        for (int i = 0; i < objects.size(); i++) {
             Enrolment e = (Enrolment) objects.get(i);
-            Object[] obj = {i + 1, e.getStudent().getId(), e.getModule().getCode(), e.getInternalMark(),
-                    e.getExaminationMark(), e.getFinalGrade()};
-
+            Object[] obj = {
+                    i + 1,
+                    e.getStudent().getId(),
+                    e.getModule().getCode(),
+                    e.getInternalMark(),
+                    e.getExaminationMark(),
+                    e.getFinalGrade()
+            };
             table.addRow(obj);
         }
-
         JTable tblContacts = new JTable(table);
         frame.add(new JScrollPane(tblContacts));
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setPreferredSize(new Dimension(700, 400));
         frame.setLocation(0, 100);
-
         frame.setVisible(true);
     }
 
@@ -141,8 +171,21 @@ public class EnrolmentManager extends Manager {
         } else {
             enrolment = new Enrolment(student, module, internalMark, examMark);
             objects.add(enrolment);
-            showMessage("created object=Enrolment(" + enrolment.toString() + ", " + enrolment.getInternalMark() + ", "
+            showMessage("created object=Enrolment(" + enrolment + ", " + enrolment.getInternalMark() + ", "
                     + enrolment.getExaminationMark() + ")");
+            try {
+                String sql = "INSERT INTO enrolments(s_id,s_name,m_code,m_name,internal,examination) VALUES(?,?,?,?,?,?)";
+                PreparedStatement ps = connection.prepareStatement(sql);
+                ps.setString(1, studentId);
+                ps.setString(2, student.getName());
+                ps.setString(3, moduleCode);
+                ps.setString(4, module.getName());
+                ps.setDouble(5, internalMark);
+                ps.setDouble(6, examMark);
+                ps.executeUpdate();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             gui.setVisible(false);
         }
 
