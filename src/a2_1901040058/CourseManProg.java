@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.Connection;
 import java.util.Objects;
 
 public class CourseManProg extends WindowAdapter implements ActionListener {
@@ -17,24 +18,21 @@ public class CourseManProg extends WindowAdapter implements ActionListener {
     private final ModuleManager moduleManager; // the module manager
     private final EnrolmentManager enrolmentManager; // the module manager
     private JFrame gui;
+    private Connection connection;
 
-    public CourseManProg() {
+    public CourseManProg() throws Exception {
         createGUI();
-        studentManager = new StudentManager("StudentManager");
-        moduleManager = new ModuleManager("ModuleManager");
-        enrolmentManager = new EnrolmentManager("EnrolmentManager", studentManager, moduleManager);
+        connection = DBHelper.getConnection();
+        studentManager = new StudentManager("StudentManager", connection);
+        moduleManager = new ModuleManager("ModuleManager", connection);
+        enrolmentManager = new EnrolmentManager("EnrolmentManager", studentManager, moduleManager, connection);
     }
 
     public void createGUI() {
-        // 1. create window object
         gui = new JFrame("CourseMan");
-        // 2. setup window
         gui.setSize(400, 460);
-        // 3. handle window events
         gui.addWindowListener(this);
         gui.setLocationRelativeTo(null);
-        // 4. add components
-        // menu
         JMenuBar menubar = new JMenuBar();
         gui.setJMenuBar(menubar);
 
@@ -126,7 +124,7 @@ public class CourseManProg extends WindowAdapter implements ActionListener {
         }
     }
 
-    public void startUp() throws Exception {
+    public void startUp() {
         studentManager.startUp();
         moduleManager.startUp();
         enrolmentManager.startUp();

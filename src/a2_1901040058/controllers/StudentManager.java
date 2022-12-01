@@ -6,10 +6,9 @@ import a2_1901040058.models.Student;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class StudentManager extends Manager {
     // view elements
@@ -19,18 +18,11 @@ public class StudentManager extends Manager {
     private JTextField jEmail;
     private ArrayList<Student> students;
     Connection connection;
-    Statement statement;
-    ResultSet rs;
 
-    public StudentManager(String title) {
+    public StudentManager(String title, Connection connection) {
         super(title);
         students = new ArrayList<>();
-        try {
-            connection = DBHelper.getConnection();
-            statement = connection.createStatement();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.connection = connection;
     }
 
     @Override
@@ -96,43 +88,53 @@ public class StudentManager extends Manager {
     }
 
     public Student getStudentByID(String id) {
-        for (Student student : students) {
-            if (student.getId().equalsIgnoreCase(id)) {
-                return student;
+        try {
+            List<Student> students = DBHelper.getAllStudents();
+            for (Student student : students) {
+                if (student.getId().equalsIgnoreCase(id)) {
+                    return student;
+                }
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         return null;
     }
 
-    public void showListStudent() throws Exception {
-        JFrame frame = new JFrame("List of the students");
-        String[] headers = {"#", "Student ID", "Student Name", "Student Address", "Student Email"};
-        Object[][] data = {};
-        rs = statement.executeQuery("SELECT * FROM students");
-        while (rs.next()) {
-            String name = rs.getString("name");
-            String dob = rs.getString("dob");
-            String address = rs.getString("address");
-            String email = rs.getString("email");
-            Student student = new Student(name, dob, address, email);
-            students.add(student);
+    public void showListStudent() {
+        try {
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM students");
+            ResultSet rs = ps.executeQuery();
+            JFrame frame = new JFrame("List of the students");
+            String[] headers = {"Student ID", "Student Name", "Student Address", "Student Email", "Date of birth"};
+            Object[][] data = {};
+            DefaultTableModel table = new DefaultTableModel(data, headers);
+            int i = 0;
+            while (rs.next()) {
+                table.addRow(data);
+                String id = rs.getString("id");
+                String name = rs.getString("name");
+                String address = rs.getString("address");
+                String email = rs.getString("email");
+                String dob = rs.getString("dob");
+                table.setValueAt(id, i, 0);
+                table.setValueAt(name, i, 1);
+                table.setValueAt(address, i, 2);
+                table.setValueAt(email, i, 3);
+                table.setValueAt(dob, i, 4);
+                i++;
+            }
+
+            JTable studentTable = new JTable(table);
+            frame.add(new JScrollPane(studentTable));
+            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setPreferredSize(new Dimension(700, 400));
+            frame.setLocation(new Point(0, 100));
+            frame.setVisible(true);
+            frame.pack();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-        DefaultTableModel table = new DefaultTableModel(data, headers);
-        for (int i = 0; i < students.size(); i++) {
-            Student s = students.get(i);
-            table.addRow(data);
-            table.setValueAt(i + 1, i, 0);
-            table.setValueAt(s.getId(), i, 1);
-            table.setValueAt(s.getName(), i, 2);
-            table.setValueAt(s.getAddress(), i, 3);
-            table.setValueAt(s.getEmail(), i, 4);
-        }
-        JTable studentTable = new JTable(table);
-        frame.add(new JScrollPane(studentTable));
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        frame.setPreferredSize(new Dimension(700, 400));
-        frame.setLocation(new Point(0, 100));
-        frame.setVisible(true);
-        frame.pack();
     }
 }

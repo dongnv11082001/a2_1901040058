@@ -4,14 +4,17 @@ import a2_1901040058.DBHelper;
 import a2_1901040058.models.CompulsoryModule;
 import a2_1901040058.models.ElectiveModule;
 import a2_1901040058.models.Module;
+import a2_1901040058.models.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class ModuleManager extends Manager {
@@ -20,13 +23,12 @@ public class ModuleManager extends Manager {
     private ArrayList<Module> modules;
     Connection connection;
     Statement statement;
-    ResultSet rs;
 
-    public ModuleManager(String title) {
+    public ModuleManager(String title, Connection connection) {
         super(title);
         modules = new ArrayList<>();
+        this.connection = connection;
         try {
-            connection = DBHelper.getConnection();
             statement = connection.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
@@ -129,48 +131,50 @@ public class ModuleManager extends Manager {
     }
 
     public Module getModuleByCode(String code) {
-        for (Module module : modules) {
-            if (module.getCode().equalsIgnoreCase(code)) {
-                return module;
+        try {
+            List<Module> modules = DBHelper.getAllModules();
+            for (Module module : modules) {
+                if (module.getCode().equalsIgnoreCase(code)) {
+                    return module;
+                }
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         return null;
     }
 
-    public void showListModule() throws Exception {
-        Module module;
-        rs = statement.executeQuery("SELECT * FROM modules");
-        while (rs.next()) {
-            String name = rs.getString("name");
-            int credits = rs.getInt("credits");
-            int semester = rs.getInt("semester");
-            String department = rs.getString("department");
-            if (Objects.equals(combo.getSelectedItem(), "Compulsory")) {
-                module = new CompulsoryModule(name, semester, credits);
-            } else {
-                module = new ElectiveModule(name, semester, credits, department);
+    public void showListModule() {
+        try {
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM modules");
+            ResultSet rs = ps.executeQuery();
+            JFrame frame = new JFrame("List of the modules");
+            String[] headers = {"Module Code", "Module Name", "Module Credits", "Module Semester"};
+            Object[][] data = {};
+            DefaultTableModel table = new DefaultTableModel(data, headers);
+
+            int i = 0;
+            while (rs.next()) {
+                table.addRow(data);
+                String code = rs.getString("code");
+                String name = rs.getString("name");
+                String semester = rs.getString("semester");
+                String credits = rs.getString("credits");
+                table.setValueAt(code, i, 0);
+                table.setValueAt(name, i, 1);
+                table.setValueAt(credits, i, 2);
+                table.setValueAt(semester, i, 3);
+                i++;
             }
-            modules.add(module);
+            JTable tblContacts = new JTable(table);
+            frame.add(new JScrollPane(tblContacts));
+            frame.setPreferredSize(new Dimension(700, 400));
+            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setLocation(new Point(0, 100));
+            frame.setVisible(true);
+            frame.pack();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-        JFrame frame = new JFrame("List of the modules");
-        String[] headers = {"#", "Module Code", "Module Name", "Module Credits", "Module Semester"};
-        Object[][] data = {};
-        DefaultTableModel table = new DefaultTableModel(data, headers);
-        for (int i = 0; i < modules.size(); i++) {
-            Module m = modules.get(i);
-            table.addRow(data);
-            table.setValueAt(i + 1, i, 0);
-            table.setValueAt(m.getCode(), i, 1);
-            table.setValueAt(m.getName(), i, 2);
-            table.setValueAt(m.getCredits(), i, 3);
-            table.setValueAt(m.getSemester(), i, 4);
-        }
-        JTable tblContacts = new JTable(table);
-        frame.add(new JScrollPane(tblContacts));
-        frame.setPreferredSize(new Dimension(700, 400));
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        frame.setLocation(new Point(0, 100));
-        frame.setVisible(true);
-        frame.pack();
     }
 }
