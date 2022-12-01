@@ -77,15 +77,17 @@ public class EnrolmentManager extends Manager {
             JTable initialReportTable = new JTable(table);
             PreparedStatement ps = connection.prepareStatement("SELECT * FROM enrolments");
             ResultSet rs = ps.executeQuery();
-            List<Enrolment> enrolments = DBHelper.getAllEnrolments();
             int row = 0;
             while (rs.next()) {
                 table.addRow(data);
-                Enrolment e = enrolments.get(row);
-                table.setValueAt(e.getStudent().getId(), row, 0);
-                table.setValueAt(e.getStudent().getName(), row, 1);
-                table.setValueAt(e.getModule().getCode(), row, 2);
-                table.setValueAt(e.getModule().getName(), row, 3);
+                String id = rs.getString("s_id");
+                String sName = rs.getString("s_name");
+                String code = rs.getString("m_code");
+                String mName = rs.getString("m_name");
+                table.setValueAt(id, row, 0);
+                table.setValueAt(sName, row, 1);
+                table.setValueAt(code, row, 2);
+                table.setValueAt(mName, row, 3);
                 row++;
             }
             frame.add(new JScrollPane(initialReportTable));
@@ -102,24 +104,33 @@ public class EnrolmentManager extends Manager {
 
     public void assessmentReport() {
         try {
-            JFrame frame = new JFrame("List of the assessed enrolments");
-            String[] headers = {"Student ID", "Module Code", "Internal mark", "Examination mark", "Final grade"};
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM enrolments");
+            ResultSet rs = ps.executeQuery();
+            int row = 0;
+            JFrame frame = new JFrame("List of the assessment enrolments");
             Object[][] data = {};
+            String[] headers = {"Student ID", "Student Name", "Module Code", "Module Name", "Internal", "Examination", "Final Grade"};
             DefaultTableModel table = new DefaultTableModel(data, headers);
-            List<Enrolment> enrolments = DBHelper.getAllEnrolments();
-            System.out.println(enrolments);
-            for (Enrolment e : enrolments) {
-                Object[] obj = {
-                        e.getStudent().getId(),
-                        e.getModule().getCode(),
-                        e.getInternalMark(),
-                        e.getExaminationMark(),
-                        e.getFinalGrade()
-                };
-                table.addRow(obj);
+            while (rs.next()) {
+                table.addRow(data);
+                String id = rs.getString("s_id");
+                String sName = rs.getString("s_name");
+                String code = rs.getString("m_code");
+                String mName = rs.getString("m_name");
+                float internal = (float) rs.getDouble("internal");
+                float examination = (float) rs.getDouble("examination");
+                String finalGrade = rs.getString("finalGrade");
+                table.setValueAt(id, row, 0);
+                table.setValueAt(sName, row, 1);
+                table.setValueAt(code, row, 2);
+                table.setValueAt(mName, row, 3);
+                table.setValueAt(internal, row, 4);
+                table.setValueAt(examination, row, 5);
+                table.setValueAt(finalGrade, row, 6);
+                row++;
             }
-            JTable tblContacts = new JTable(table);
-            frame.add(new JScrollPane(tblContacts));
+            JTable assessmentReportTable = new JTable(table);
+            frame.add(new JScrollPane(assessmentReportTable));
             frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             frame.setPreferredSize(new Dimension(700, 400));
             frame.setLocation(0, 100);
@@ -138,11 +149,10 @@ public class EnrolmentManager extends Manager {
 
         String studentId = jStu.getText();
         String moduleCode = jMod.getText();
-        float internalMark = Float.parseFloat(jInternal.getText());
-        float examMark = Float.parseFloat(jExam.getText());
+        float internalMark = (float) Double.parseDouble(jInternal.getText());
+        float examMark = (float) Double.parseDouble(jExam.getText());
 
         student = studentManager.getStudentByID(studentId);
-        System.out.println(student);
         module = moduleManager.getModuleByCode(moduleCode);
         if (student == null) {
             showErrorMessage("Not found Student with id=" + studentId);

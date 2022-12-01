@@ -1,7 +1,5 @@
 package a2_1901040058;
 
-import a2_1901040058.controllers.ModuleManager;
-import a2_1901040058.controllers.StudentManager;
 import a2_1901040058.models.CompulsoryModule;
 import a2_1901040058.models.ElectiveModule;
 import a2_1901040058.models.Enrolment;
@@ -57,23 +55,6 @@ public class DBHelper {
         return listModule;
     }
 
-    public static List<Enrolment> getAllEnrolments() throws SQLException {
-        String sql = "SELECT * FROM enrolments";
-        Statement st = connection.createStatement();
-        ResultSet rs = st.executeQuery(sql);
-        ArrayList<Enrolment> listEnrolment = new ArrayList<>();
-        StudentManager studentManager = new StudentManager("", connection);
-        ModuleManager moduleManager = new ModuleManager("", connection);
-        while (rs.next()) {
-            String s_id = rs.getString("s_id");
-            String m_code = rs.getString("m_code");
-            double internal = rs.getDouble("internal");
-            double examination = rs.getDouble("examination");
-            listEnrolment.add(new Enrolment(studentManager.getStudentByID(s_id), moduleManager.getModuleByCode(m_code), (float) internal, (float) examination));
-        }
-        return listEnrolment;
-    }
-
     public static void createStudent(Student student) throws SQLException {
         String sql = "INSERT INTO students(id,name,address, email, dob) VALUES(?,?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -107,7 +88,7 @@ public class DBHelper {
     }
 
     public static void createEnrolment(Enrolment enrolment) throws SQLException {
-        String sql = "INSERT INTO enrolments(s_id,s_name,m_code,m_name,internal,examination) VALUES(?,?,?,?,?,?)";
+        String sql = "INSERT INTO enrolments(s_id,s_name,m_code,m_name,internal,examination,finalGrade) VALUES(?,?,?,?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, enrolment.getStudent().getId());
         ps.setString(2, enrolment.getStudent().getName());
@@ -115,6 +96,7 @@ public class DBHelper {
         ps.setString(4, enrolment.getModule().getName());
         ps.setDouble(5, enrolment.getInternalMark());
         ps.setDouble(6, enrolment.getExaminationMark());
+        ps.setString(7, String.valueOf(enrolment.getFinalGrade()));
         ps.executeUpdate();
     }
 }
