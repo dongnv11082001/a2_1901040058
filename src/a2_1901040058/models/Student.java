@@ -24,6 +24,18 @@ public class Student {
         }
     }
 
+    public Student(String id, String name, String dob, String address, String email) throws Exception {
+        if (!validateName(name) || !validateDob(dob) || !validateAddress(address) || !validateEmail(email)) {
+            throw new Exception("Invalid name, dob, address, email");
+        } else {
+            this.name = name;
+            this.dob = dob;
+            this.address = address;
+            this.email = email;
+            this.id = id;
+        }
+    }
+
     private String generateId() {
         return LETTER_STUDENT + year++;
     }

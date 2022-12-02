@@ -24,6 +24,17 @@ public class Module implements Serializable {
         }
     }
 
+    public Module(String code, String name, int semester, int credits) throws Exception {
+        if (!validateName(name) || !validateCredits(credits) || !validateSemester(semester)) {
+            throw new Exception("Invalid module name, credits, semester");
+        } else {
+            this.name = name;
+            this.semester = semester;
+            this.credits = credits;
+            this.code = code;
+        }
+    }
+
     public String getCode() {
         return code;
     }

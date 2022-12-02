@@ -30,11 +30,12 @@ public class DBHelper {
 
         ArrayList<Student> listStudent = new ArrayList<>();
         while (rs.next()) {
+            String id = rs.getString("id");
             String name = rs.getString("name");
             String address = rs.getString("address");
             String email = rs.getString("email");
             String dob = rs.getString("dob");
-            listStudent.add(new Student(name, dob, address, email));
+            listStudent.add(new Student(id, name, dob, address, email));
         }
 
         return listStudent;
@@ -47,10 +48,11 @@ public class DBHelper {
 
         ArrayList<Module> listModule = new ArrayList<>();
         while (rs.next()) {
+            String code = rs.getString("code");
             String name = rs.getString("name");
             int credits = rs.getInt("credits");
             int semester = rs.getInt("semester");
-            listModule.add(new Module(name, semester, credits));
+            listModule.add(new Module(code, name, semester, credits));
         }
         return listModule;
     }
