@@ -1,10 +1,7 @@
 package a2_1901040058;
 
-import a2_1901040058.models.CompulsoryModule;
-import a2_1901040058.models.ElectiveModule;
-import a2_1901040058.models.Enrolment;
 import a2_1901040058.models.Module;
-import a2_1901040058.models.Student;
+import a2_1901040058.models.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -58,9 +55,15 @@ public class DBHelper {
     }
 
     public static void createStudent(Student student) throws SQLException {
+        String query = "SELECT id FROM students ORDER BY id DESC LIMIT 1";
+        Statement st = connection.createStatement();
+        ResultSet rs = st.executeQuery(query);
+        String number = rs.getString("id").substring(1);
+        String textPart = "S";
+        int digitPart = Integer.parseInt(number) + 1;
         String sql = "INSERT INTO students(id,name,address, email, dob) VALUES(?,?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, student.getId());
+        ps.setString(1, textPart + digitPart);
         ps.setString(2, student.getName());
         ps.setString(3, student.getAddress());
         ps.setString(4, student.getEmail());
@@ -69,9 +72,20 @@ public class DBHelper {
     }
 
     public static void createElectiveModule(ElectiveModule module) throws SQLException {
+        String query = "SELECT * FROM modules" + " where semester=" + module.getSemester() + " ORDER BY code DESC LIMIT 1";
+        Statement st = connection.createStatement();
+        ResultSet rs = st.executeQuery(query);
+        String number = rs.getString("code").substring(2);
+        String textPart;
+        if (rs.getString("code").contains("M1")) {
+            textPart = "M10";
+        } else {
+            textPart = "M20";
+        }
+        int digitPart = Integer.parseInt(number) + 1;
         String sql = "INSERT INTO modules(code,name,semester,credits,department) VALUES(?,?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, module.getCode());
+        ps.setString(1, textPart + digitPart);
         ps.setString(2, module.getName());
         ps.setInt(3, module.getSemester());
         ps.setInt(4, module.getCredits());
@@ -80,9 +94,20 @@ public class DBHelper {
     }
 
     public static void createCompulsoryModule(CompulsoryModule module) throws SQLException {
+        String query = "SELECT * FROM modules" + " where semester=" + module.getSemester() + " ORDER BY code DESC LIMIT 1";
+        Statement st = connection.createStatement();
+        ResultSet rs = st.executeQuery(query);
+        String number = rs.getString("code").substring(2);
+        String textPart;
+        if (rs.getString("code").contains("M1")) {
+            textPart = "M10";
+        } else {
+            textPart = "M20";
+        }
+        int digitPart = Integer.parseInt(number) + 1;
         String sql = "INSERT INTO modules(code,name,semester,credits) VALUES(?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, module.getCode());
+        ps.setString(1, textPart + digitPart);
         ps.setString(2, module.getName());
         ps.setInt(3, module.getSemester());
         ps.setInt(4, module.getCredits());
@@ -100,5 +125,37 @@ public class DBHelper {
         ps.setDouble(6, enrolment.getExaminationMark());
         ps.setString(7, String.valueOf(enrolment.getFinalGrade()));
         ps.executeUpdate();
+    }
+
+    public static String[] getAllStudentsID() throws Exception {
+        String sql = "SELECT * FROM students";
+        Statement st = connection.createStatement();
+        ResultSet rs = st.executeQuery(sql);
+
+        ArrayList<String> listId = new ArrayList();
+        while (rs.next()) {
+            String id = rs.getString("id");
+            listId.add(id);
+        }
+        String[] ids = new String[listId.size()];
+        ids = listId.toArray(ids);
+
+        return ids;
+    }
+
+    public static String[] getAllModulesCode() throws Exception {
+        String sql = "SELECT * FROM modules";
+        Statement st = connection.createStatement();
+        ResultSet rs = st.executeQuery(sql);
+
+        ArrayList<String> listCode = new ArrayList();
+        while (rs.next()) {
+            String code = rs.getString("code");
+            listCode.add(code);
+        }
+        String[] codes = new String[listCode.size()];
+        codes = listCode.toArray(codes);
+
+        return codes;
     }
 }

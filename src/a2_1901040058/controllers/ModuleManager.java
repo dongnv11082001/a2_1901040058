@@ -4,7 +4,6 @@ import a2_1901040058.DBHelper;
 import a2_1901040058.models.CompulsoryModule;
 import a2_1901040058.models.ElectiveModule;
 import a2_1901040058.models.Module;
-import a2_1901040058.models.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -124,7 +123,15 @@ public class ModuleManager extends Manager {
                 DBHelper.createElectiveModule((ElectiveModule) m);
             }
             modules.add(m);
-            showMessage("created module=" + m);
+            String query = "SELECT code FROM modules where semester =" + m.getSemester() + " ORDER BY code DESC LIMIT 1";
+            Statement st = connection.createStatement();
+            ResultSet rs = st.executeQuery(query);
+            showMessage("Module{" +
+                    "code='" + rs.getString("code") + '\'' +
+                    ", name='" + name + '\'' +
+                    ", semester=" + semester +
+                    ", credits=" + credits +
+                    '}');
             gui.setVisible(false);
         }
         return modules;

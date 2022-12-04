@@ -13,10 +13,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 public class EnrolmentManager extends Manager {
-    private JTextField jStu, jMod, jInternal, jExam;
+    private JComboBox comboStudent, comboModule;
+    private JTextField jInternal, jExamination;
     private final StudentManager studentManager;
     private final ModuleManager moduleManager;
     Connection connection;
@@ -30,48 +30,75 @@ public class EnrolmentManager extends Manager {
 
     @Override
     protected void createMiddlePanel() {
+        String[] listStudentId = null;
+        String[] listModuleId = null;
         gui = new JFrame("Create new enrolment");
         gui.setSize(400, 300);
         gui.addWindowListener(this);
         gui.setLocation(50, 200);
-        // top
         JPanel pnlTop = new JPanel();
         gui.add(pnlTop, BorderLayout.NORTH);
         JLabel lblTitle = new JLabel("Enter details:");
         pnlTop.add(lblTitle);
-        // middle
         middlePanel = new JPanel();
         middlePanel.setLayout(new GridLayout(0, 2));
         middlePanel.setBorder(BorderFactory.createEtchedBorder());
+        JPanel panelComboStudent = new JPanel(new GridLayout(1, 2));
+        try {
+            listStudentId = DBHelper.getAllStudentsID();
+            listModuleId = DBHelper.getAllModulesCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assert listStudentId != null;
+        comboStudent = new JComboBox<>(listStudentId);
         JLabel lblStu = new JLabel("Student ID(*):");
+        panelComboStudent.add(lblStu);
+        panelComboStudent.add(comboStudent);
+
+        JPanel panelComboModule = new JPanel(new GridLayout(1, 2));
+        assert listModuleId != null;
+        comboModule = new JComboBox<>(listModuleId);
         JLabel lblMod = new JLabel("Module Code(*):");
+        panelComboModule.add(lblMod);
+        panelComboModule.add(comboModule);
+
         JLabel lblIn = new JLabel("Internal mark:");
-        JLabel lblEx = new JLabel("Exam mark:");
-        jStu = new JTextField(20);
-        jMod = new JTextField(20);
+        JLabel lblEx = new JLabel("Examination mark:");
         jInternal = new JTextField(20);
-        jExam = new JTextField(20);
+        jExamination = new JTextField(20);
         middlePanel.add(lblStu);
-        middlePanel.add(jStu);
+        middlePanel.add(panelComboStudent);
         middlePanel.add(lblMod);
-        middlePanel.add(jMod);
+        middlePanel.add(panelComboModule);
         middlePanel.add(lblIn);
         middlePanel.add(jInternal);
         middlePanel.add(lblEx);
-        middlePanel.add(jExam);
+        middlePanel.add(jExamination);
         gui.add(middlePanel, BorderLayout.CENTER);
-        // bottom
         JPanel pnlBottom = new JPanel();
         gui.add(pnlBottom, BorderLayout.SOUTH);
         JButton btnOK = new JButton("OK");
         btnOK.addActionListener(this);
         pnlBottom.add(btnOK);
+
+        comboStudent.addActionListener(e -> {
+            comboStudent = (JComboBox) e.getSource();
+            String sid = (String) comboStudent.getSelectedItem();
+            System.out.println(sid);
+        });
+
+        comboModule.addActionListener(e -> {
+            comboModule = (JComboBox) e.getSource();
+            String mcode = (String) comboModule.getSelectedItem();
+            System.out.println(mcode);
+        });
     }
 
     public void initialReport() {
         try {
             JFrame frame = new JFrame("List of the initial enrolments");
-            String[] headers = {"Student ID", "Student Name", "Module Code", "Module Name"};
+            String[] headers = {"#","Student ID", "Student Name", "Module Code", "Module Name"};
             Object[][] data = {};
             DefaultTableModel table = new DefaultTableModel(data, headers);
             JTable initialReportTable = new JTable(table);
@@ -84,10 +111,11 @@ public class EnrolmentManager extends Manager {
                 String sName = rs.getString("s_name");
                 String code = rs.getString("m_code");
                 String mName = rs.getString("m_name");
-                table.setValueAt(id, row, 0);
-                table.setValueAt(sName, row, 1);
-                table.setValueAt(code, row, 2);
-                table.setValueAt(mName, row, 3);
+                table.setValueAt(row + 1, row, 0);
+                table.setValueAt(id, row, 1);
+                table.setValueAt(sName, row, 2);
+                table.setValueAt(code, row, 3);
+                table.setValueAt(mName, row, 4);
                 row++;
             }
             frame.add(new JScrollPane(initialReportTable));
@@ -109,7 +137,7 @@ public class EnrolmentManager extends Manager {
             int row = 0;
             JFrame frame = new JFrame("List of the assessment enrolments");
             Object[][] data = {};
-            String[] headers = {"Student ID", "Student Name", "Module Code", "Module Name", "Internal", "Examination", "Final Grade"};
+            String[] headers = {"#","Student ID", "Student Name", "Module Code", "Module Name", "Internal", "Examination", "Final Grade"};
             DefaultTableModel table = new DefaultTableModel(data, headers);
             while (rs.next()) {
                 table.addRow(data);
@@ -120,13 +148,14 @@ public class EnrolmentManager extends Manager {
                 float internal = (float) rs.getDouble("internal");
                 float examination = (float) rs.getDouble("examination");
                 String finalGrade = rs.getString("finalGrade");
-                table.setValueAt(id, row, 0);
-                table.setValueAt(sName, row, 1);
-                table.setValueAt(code, row, 2);
-                table.setValueAt(mName, row, 3);
-                table.setValueAt(internal, row, 4);
-                table.setValueAt(examination, row, 5);
-                table.setValueAt(finalGrade, row, 6);
+                table.setValueAt(row + 1, row, 0);
+                table.setValueAt(id, row, 1);
+                table.setValueAt(sName, row, 2);
+                table.setValueAt(code, row, 3);
+                table.setValueAt(mName, row, 4);
+                table.setValueAt(internal, row, 5);
+                table.setValueAt(examination, row, 6);
+                table.setValueAt(finalGrade, row, 7);
                 row++;
             }
             JTable assessmentReportTable = new JTable(table);
@@ -147,10 +176,10 @@ public class EnrolmentManager extends Manager {
         Module module;
         Student student;
 
-        String studentId = jStu.getText();
-        String moduleCode = jMod.getText();
+        String studentId = (String) comboStudent.getSelectedItem();
+        String moduleCode = (String) comboModule.getSelectedItem();
         float internalMark = (float) Double.parseDouble(jInternal.getText());
-        float examMark = (float) Double.parseDouble(jExam.getText());
+        float examMark = (float) Double.parseDouble(jExamination.getText());
 
         student = studentManager.getStudentByID(studentId);
         module = moduleManager.getModuleByCode(moduleCode);

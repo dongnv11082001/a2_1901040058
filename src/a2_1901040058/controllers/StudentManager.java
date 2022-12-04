@@ -6,7 +6,10 @@ import a2_1901040058.models.Student;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +85,16 @@ public class StudentManager extends Manager {
             s = new Student(name, dob, address, email);
             students.add(s);
             DBHelper.createStudent(s);
-            showMessage("created student= " + s);
+            String query = "SELECT id FROM students ORDER BY id DESC LIMIT 1";
+            Statement st = connection.createStatement();
+            ResultSet rs = st.executeQuery(query);
+            showMessage("Student{" +
+                    "id='" + rs.getString("id") + '\'' +
+                    ", name='" + name + '\'' +
+                    ", dob='" + dob + '\'' +
+                    ", address='" + address + '\'' +
+                    ", email='" + email + '\'' +
+                    '}');
         }
         return students;
     }
